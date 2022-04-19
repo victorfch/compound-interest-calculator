@@ -1,25 +1,34 @@
 import { Formik, Form } from 'formik'
+import * as Yup from 'yup'
 import Input from './components/Input'
 import Button from './components/Button'
 import Container from './components/Container'
 import Section from './components/Section'
 import { useState } from 'react'
+import Balance from './components/Balance'
 
-const compoundInterest = (deposit, contribuition, years, rate) => {
+const compoundInterest = (deposit, contribution, years, rate) => {
 	let total = deposit
 	for (let i = 0; i < years; i++) {
-		total = (total + contribuition) * (rate + 1)
+		total = (total + contribution) * (rate + 1)
 	}
 
 	return Math.round(total)
 }
 
+const formatter = new Intl.NumberFormat("es", {
+	style: "currency",
+	currency: "EUR",
+	minimumFractionDigits: 2,
+	maximumFractionDigits: 2
+})
+
 function App() {
 	const [balance, setBalance] = useState('')
 
-	const handleSubmit = ({deposit, contribuition, years, rate}) => {
-		const val = compoundInterest(Number(deposit), Number(contribuition), Number(years), Number(rate))
-		setBalance(val)
+	const handleSubmit = ({deposit, contribution, years, rate}) => {
+		const val = compoundInterest(Number(deposit), Number(contribution), Number(years), Number(rate))
+		setBalance(formatter.format(val))
 	}
 
 	return (
@@ -28,21 +37,27 @@ function App() {
 				<Formik
 					initialValues={{
 						deposit: "",
-						contribuition: "",
+						contribution: "",
 						years: "",
 						rate: ""
 					}}
 					onSubmit={handleSubmit}
+					validationSchema={Yup.object({
+						deposit: Yup.number().required("Obligatorio").typeError("Debe ser un número"),
+						contribution: Yup.number().required("Obligatorio").typeError("Debe ser un número"),
+						years: Yup.number().required("Obligatorio").typeError("Debe ser un número"),
+						rate: Yup.number().required("Obligatorio").typeError("Debe ser un número").min(0, "El valor mínimo es 0"),
+					})}
 				>
 					<Form>
 						<Input name="deposit" label="Depósito inicial" />
-						<Input name="contribuition" label="Contribuición anual" />
+						<Input name="contribution" label="Contribuición anual" />
 						<Input name="years" label="Años" />
 						<Input name="rate" label="Interés estimado" />
-						<Button>Calcular</Button>
+						<Button type="submit">Calcular</Button>
 					</Form>
 				</Formik>
-				{balance && `Balance final: ${balance}`}
+				{balance && <Balance>Balance final: {balance}</Balance>}
 			</Section>
 		</Container>
 	)
